@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>APM Console</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-theme="dark">
+<header class="topbar">
+  <div class="brand">APM<span class="brand-sub">console</span></div>
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-tab="overview">总览</button>
+    <button class="tab" data-tab="traces">链路</button>
+    <button class="tab" data-tab="metrics">指标</button>
+    <button class="tab" data-tab="logs">日志</button>
+    <button class="tab" data-tab="services">服务</button>
+  </nav>
+  <div class="topbar-right">
+    <label class="select-label">窗口
+      <select id="window">
+        <option value="5m">5 分钟</option>
+        <option value="15m" selected>15 分钟</option>
+        <option value="30m">30 分钟</option>
+        <option value="1h">1 小时</option>
+      </select>
+    </label>
+    <label class="switch"><input type="checkbox" id="autoRefresh" checked>自动刷新</label>
+    <span class="muted" id="lastRefresh"></span>
+  </div>
+</header>
+
+<main>
+  <section id="page-overview" class="page active">
+    <div class="stat-row" id="statCards"></div>
+
+    <div class="chart-card">
+      <div class="chart-title">延迟趋势 <span class="muted">平均 / P95,单位 ms</span></div>
+      <div class="chart" id="chartLatency"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">请求趋势 <span class="muted">每 10 秒桶,按服务</span></div>
+      <div class="chart" id="chartRequests"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">错误率 <span class="muted">错误请求占比</span></div>
+      <div class="chart" id="chartErrors"></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="chart-title">Top 服务 <span class="muted">窗口内请求数</span></div>
+        <div id="topServices"></div>
+      </div>
+      <div class="card">
+        <div class="chart-title">最慢链路 Top 10</div>
+        <div id="topSlow"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="page-traces" class="page">
+    <div class="filters">
+      <label>服务
+        <select id="traceService"><option value="">全部</option></select>
+      </label>
+      <label>状态
+        <select id="traceStatus">
+          <option value="">全部</option>
+          <option value="ok">正常</option>
+          <option value="error">异常</option>
+        </select>
+      </label>
+      <label>慢于
+        <input type="number" id="traceMinDur" placeholder="ms" min="0" step="10">
+      </label>
+      <label>搜索
+        <input type="text" id="traceSearch" placeholder="事务名包含...">
+      </label>
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table class="table" id="traceTable">
+          <thead>
+            <tr><th>时间</th><th>Trace ID</th><th>服务</th><th>事务</th><th>耗时</th><th>状态</th><th>HTTP</th><th>Span 数</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="more-row"><button class="btn" id="traceMore">加载更多</button></div>
+    </div>
+  </section>
+
+  <section id="page-metrics" class="page">
+    <div class="metric-layout">
+      <div class="card metric-list-card">
+        <div class="chart-title">指标列表</div>
+        <div class="metric-options">
+          <label class="switch"><input type="checkbox" id="metricRate" checked>counter 显示速率</label>
+          <label class="switch">分位数
+            <select id="metricQuantile">
+              <option value="0.50">p50</option>
+              <option value="0.95" selected>p95</option>
+              <option value="0.99">p99</option>
+            </select>
+          </label>
+        </div>
+        <div id="metricList"></div>
+      </div>
+      <div class="chart-card metric-chart-card">
+        <div class="chart-title" id="metricChartTitle">选择一个指标</div>
+        <div class="chart" id="chartMetric"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="page-logs" class="page">
+    <div class="filters">
+      <label>级别
+        <select id="logLevel">
+          <option value="">全部</option>
+          <option value="debug">debug</option>
+          <option value="info">info</option>
+          <option value="warn">warn</option>
+          <option value="error">error</option>
+        </select>
+      </label>
+      <label>服务
+        <select id="logService"><option value="">全部</option></select>
+      </label>
+      <label>搜索
+        <input type="text" id="logSearch" placeholder="消息包含...">
+      </label>
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table class="table" id="logTable">
+          <thead>
+            <tr><th>时间</th><th>级别</th><th>服务</th><th>消息</th><th>Trace</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section id="page-services" class="page">
+    <div class="card">
+      <div class="table-wrap">
+        <table class="table" id="serviceTable">
+          <thead>
+            <tr><th>服务</th><th>实例</th><th>版本</th><th>请求数</th><th>错误数</th><th>平均耗时</th><th>最近上报</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="drawer-backdrop hidden" id="drawerBackdrop"></div>
+<aside class="drawer hidden" id="drawer">
+  <div class="drawer-head">
+    <h3 id="drawerTitle"></h3>
+    <button class="btn icon" id="drawerClose" title="关闭">✕</button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+</aside>
+
+<script src="app.js"></script>
+</body>
+</html>
